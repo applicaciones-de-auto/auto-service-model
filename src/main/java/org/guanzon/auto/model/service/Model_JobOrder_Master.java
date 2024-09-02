@@ -20,7 +20,6 @@ import org.guanzon.appdriver.base.GRider;
 import org.guanzon.appdriver.base.MiscUtil;
 import org.guanzon.appdriver.base.SQLUtil;
 import org.guanzon.appdriver.constant.EditMode;
-import org.guanzon.appdriver.constant.RecordStatus;
 import org.guanzon.appdriver.constant.TransactionStatus;
 import org.guanzon.appdriver.iface.GEntity;
 import org.json.simple.JSONObject;
@@ -30,10 +29,10 @@ import org.json.simple.JSONObject;
  * @author Arsiela
  */
 public class Model_JobOrder_Master implements GEntity {
-    final String XML = "Model_Job_Order_Master.xml";
+    final String XML = "Model_JobOrder_Master.xml";
     private final String psDefaultDate = "1900-01-01";
     private String psBranchCd;
-    private String psExclude = "sOwnrNmxx»cClientTp»sAddressx»sCoOwnrNm»»»»»»»»»»»»»»»»»»»"; //»
+    private String psExclude = "sOwnrNmxx»cClientTp»sAddressx»sCoOwnrNm»sCSNoxxxx»sFrameNox»sEngineNo»cVhclNewx»sPlateNox»sDescript»sVSPNOxxx»sBranchCD»sBranchNm»sCoBuyrNm»sSrvcAdvr"; //»
 
     GRider poGRider;                //application driver
     CachedRowSet poEntity;          //rowset
@@ -255,8 +254,8 @@ public class Model_JobOrder_Master implements GEntity {
     public JSONObject openRecord(String fsValue) {
         poJSON = new JSONObject();
 
-        String lsSQL = MiscUtil.makeSelect(this, ""); //exclude the columns called thru left join
-
+        String lsSQL = MiscUtil.makeSelect(this, psExclude); //exclude the columns called thru left join
+        System.out.println(lsSQL);
         //replace the condition based on the primary key column of the record
         lsSQL = MiscUtil.addCondition(lsSQL, " a.sTransNox = " + SQLUtil.toSQL(fsValue)
                                                 //+ " GROUP BY a.sTransNox "
@@ -296,15 +295,21 @@ public class Model_JobOrder_Master implements GEntity {
         poJSON = new JSONObject();
 
         if (pnEditMode == EditMode.ADDNEW || pnEditMode == EditMode.UPDATE) {
-            String lsSQL;
+            String lsSQL; 
             if (pnEditMode == EditMode.ADDNEW) {
                 //replace with the primary key column info
-                setTransNo(MiscUtil.getNextCode(getTable(), "sTransNox", true, poGRider.getConnection(), poGRider.getBranchCode()));
-
-                lsSQL = makeSQL();
-
+                setTransNo(MiscUtil.getNextCode(getTable(), "sTransNox", true, poGRider.getConnection(), poGRider.getBranchCode()+"JO"));
+                setDSNo(MiscUtil.getNextCode(getTable(), "sDSNoxxxx", true, poGRider.getConnection(), poGRider.getBranchCode()));
+                setEntryBy(poGRider.getUserID());
+                setEntryDte(poGRider.getServerDate());
+                setModifiedBy(poGRider.getUserID());
+                setModifiedDte(poGRider.getServerDate());
+                
+                lsSQL = MiscUtil.makeSQL(this, psExclude);
+                
+               // lsSQL = "Select * FROM " + getTable() + " a left join (" + makeSQL() + ") b on a.column1 = b.column "
                 if (!lsSQL.isEmpty()) {
-                    if (poGRider.executeQuery(lsSQL, getTable(), poGRider.getBranchCode(), "") > 0) {
+                    if (poGRider.executeQuery(lsSQL, getTable(), poGRider.getBranchCode(), getTargetBranchCd()) > 0) {
                         poJSON.put("result", "success");
                         poJSON.put("message", "Record saved successfully.");
                     } else {
@@ -317,16 +322,19 @@ public class Model_JobOrder_Master implements GEntity {
                 }
             } else {
                 Model_JobOrder_Master loOldEntity = new Model_JobOrder_Master(poGRider);
-
+                
                 //replace with the primary key column info
                 JSONObject loJSON = loOldEntity.openRecord(this.getTransNo());
 
                 if ("success".equals((String) loJSON.get("result"))) {
+                    setModifiedBy(poGRider.getUserID());
+                    setModifiedDte(poGRider.getServerDate());
+                    
                     //replace the condition based on the primary key column of the record
-                    lsSQL = MiscUtil.makeSQL(this, loOldEntity, "sTransNox = " + SQLUtil.toSQL(this.getTransNo()));
+                    lsSQL = MiscUtil.makeSQL(this, loOldEntity, "sTransNox = " + SQLUtil.toSQL(this.getTransNo()), psExclude);
 
                     if (!lsSQL.isEmpty()) {
-                        if (poGRider.executeQuery(lsSQL, getTable(), poGRider.getBranchCode(), "") > 0) {
+                        if (poGRider.executeQuery(lsSQL, getTable(), poGRider.getBranchCode(), getTargetBranchCd()) > 0) {
                             poJSON.put("result", "success");
                             poJSON.put("message", "Record saved successfully.");
                         } else {
@@ -349,6 +357,14 @@ public class Model_JobOrder_Master implements GEntity {
         }
 
         return poJSON;
+    }
+    
+    private String getTargetBranchCd(){
+        if (!poGRider.getBranchCode().equals(getBranchCD())){
+            return getBranchCD();
+        } else {
+            return "";
+        }
     }
 
     /**
@@ -394,7 +410,7 @@ public class Model_JobOrder_Master implements GEntity {
      * @return SQL Statement
      */
     public String makeSQL() {
-        return MiscUtil.makeSQL(this, "");
+        return MiscUtil.makeSQL(this, psExclude);
     }
     
     /**
@@ -1005,14 +1021,14 @@ public class Model_JobOrder_Master implements GEntity {
      * @param fsValue
      * @return result as success/failed
      */
-    public JSONObject setModified(String fsValue) {
+    public JSONObject setModifiedBy(String fsValue) {
         return setValue("sModified", fsValue);
     }
 
     /**
      * @return The Value of this record.
      */
-    public String getModified() {
+    public String getModifiedBy() {
         return (String) getValue("sModified");
     }
     
