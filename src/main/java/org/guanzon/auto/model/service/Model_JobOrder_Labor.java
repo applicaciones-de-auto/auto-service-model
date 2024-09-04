@@ -61,7 +61,7 @@ public class Model_JobOrder_Labor implements GEntity{
             MiscUtil.initRowSet(poEntity);
             poEntity.updateBigDecimal("nUnitPrce", new BigDecimal("0.00"));  
             poEntity.updateBigDecimal("nFRTxxxxx", new BigDecimal("0.00"));  
-            poEntity.updateInt("nEntryNox",0);   
+//            poEntity.updateInt("nEntryNox",0);   
 
             poEntity.insertRow();
             poEntity.moveToCurrentRow();
@@ -290,6 +290,8 @@ public class Model_JobOrder_Labor implements GEntity{
         if (pnEditMode == EditMode.ADDNEW || pnEditMode == EditMode.UPDATE) {
             String lsSQL;
             if (pnEditMode == EditMode.ADDNEW) {
+                setEntryBy(poGRider.getUserID());
+                setEntryDte(poGRider.getServerDate());
                 
                 lsSQL = MiscUtil.makeSQL(this, psExclude);
 
@@ -312,6 +314,9 @@ public class Model_JobOrder_Labor implements GEntity{
                 JSONObject loJSON = loOldEntity.openRecord(this.getTransNo(),this.getLaborCde());
 
                 if ("success".equals((String) loJSON.get("result"))) {
+                    setEntryBy(poGRider.getUserID());
+                    setEntryDte(poGRider.getServerDate());
+
                     //replace the condition based on the primary key column of the record
                     lsSQL = MiscUtil.makeSQL(this, loOldEntity, "sTransNox = " + SQLUtil.toSQL(this.getTransNo()) + " AND sLaborCde = " + SQLUtil.toSQL(this.getLaborCde()), psExclude);
 
