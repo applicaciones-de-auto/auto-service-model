@@ -254,13 +254,13 @@ public class Model_JobOrder_Master implements GEntity {
     public JSONObject openRecord(String fsValue) {
         poJSON = new JSONObject();
 
-        String lsSQL = MiscUtil.makeSelect(this, psExclude); //exclude the columns called thru left join
-        System.out.println(lsSQL);
+        String lsSQL = getSQL(); //MiscUtil.makeSelect(this, psExclude); //exclude the columns called thru left join
         //replace the condition based on the primary key column of the record
         lsSQL = MiscUtil.addCondition(lsSQL, " a.sTransNox = " + SQLUtil.toSQL(fsValue)
                                                 //+ " GROUP BY a.sTransNox "
                                                 );
 
+        System.out.println(lsSQL);
         ResultSet loRS = poGRider.executeQuery(lsSQL);
 
         try {
@@ -653,15 +653,16 @@ public class Model_JobOrder_Master implements GEntity {
      * @param fnValue
      * @return result as success/failed
      */
-    public JSONObject setKMReadng(Integer fnValue) {
+    public JSONObject setKMReadng(Double fnValue) {
         return setValue("nKMReadng", fnValue);
     }
 
     /**
      * @return The Value of this record.
      */
-    public Integer getKMReadng() {
-        return Integer.parseInt(String.valueOf(getValue("nKMReadng")));
+    public Double getKMReadng() {
+        //return Integer.parseInt(String.valueOf(getValue("nKMReadng")));
+        return Double.parseDouble(String.valueOf(getValue("nKMReadng")));
     }
     
     /**
