@@ -252,7 +252,7 @@ public class Model_JobOrder_Parts implements GEntity{
     public JSONObject openRecord(String fsValue, String fsValue2) {
         poJSON = new JSONObject();
 
-        String lsSQL = MiscUtil.makeSelect(this, psExclude); //exclude the columns called thru left join
+        String lsSQL = getSQL(); //MiscUtil.makeSelect(this, psExclude); //exclude the columns called thru left join
 
         //replace the condition based on the primary key column of the record
         lsSQL = MiscUtil.addCondition(lsSQL, " a.sTransNox = " + SQLUtil.toSQL(fsValue) + " AND (a.sStockIDx = " + SQLUtil.toSQL(fsValue2) + " OR REPLACE(a.sDescript,' ', '') = " + SQLUtil.toSQL(fsValue2.replace(" ", ""))+ " )" );

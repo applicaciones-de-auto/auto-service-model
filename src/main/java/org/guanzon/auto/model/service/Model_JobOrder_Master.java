@@ -32,7 +32,7 @@ public class Model_JobOrder_Master implements GEntity {
     final String XML = "Model_JobOrder_Master.xml";
     private final String psDefaultDate = "1900-01-01";
     private String psBranchCd;
-    private String psExclude = "sOwnrNmxx»cClientTp»sAddressx»sCoOwnrNm»sCSNoxxxx»sFrameNox»sEngineNo»cVhclNewx»sPlateNox»sDescript»sVSPNOxxx»sBranchCD»sBranchNm»sCoBuyrNm»sSrvcAdvr"; //»
+    private String psExclude = "sOwnrNmxx»cClientTp»sAddressx»sCoOwnrNm»sCSNoxxxx»sFrameNox»sEngineNo»cVhclNewx»sPlateNox»sVhclDesc»sVSPNOxxx»sBranchCD»sBranchNm»sCoBuyrNm»sEmployNm"; //»
 
     GRider poGRider;                //application driver
     CachedRowSet poEntity;          //rowset
@@ -466,12 +466,12 @@ public class Model_JobOrder_Master implements GEntity {
                 + " , h.sEngineNo "                                                                
                 + " , h.cVhclNewx "                                                                  
                 + " , i.sPlateNox "                                                                  
-                + " , j.sDescript "                                                                  
+                + " , j.sDescript AS sVhclDesc"                                                                  
                 + " , l.sVSPNOxxx "                                                                  
                 + " , l.sBranchCD "                                                                  
                 + " , n.sBranchNm "                                                                  
                 + " , m.sCompnyNm AS sCoBuyrNm "                                                     
-                + " , o.sCompnyNm AS sSrvcAdvr "                                                     
+                + " , o.sCompnyNm AS sEmployNm "                                                     
                 + " FROM diagnostic_master a "                                                       
                 + " LEFT JOIN client_master b ON b.sClientID = a.sClientID "                         
                 + " LEFT JOIN client_address c ON c.sClientID = a.sClientID AND c.cPrimaryx = '1' "  
@@ -1175,15 +1175,15 @@ public class Model_JobOrder_Master implements GEntity {
      * @param fsValue
      * @return result as success/failed
      */
-    public JSONObject setDescript(String fsValue) {
-        return setValue("sDescript", fsValue);
+    public JSONObject setVhclDesc(String fsValue) {
+        return setValue("sVhclDesc", fsValue);
     }
 
     /**
      * @return The Value of this record.
      */
-    public String getDescript() {
-        return (String) getValue("sDescript");
+    public String getVhclDesc() {
+        return (String) getValue("sVhclDesc");
     }
     
     /**
@@ -1260,15 +1260,15 @@ public class Model_JobOrder_Master implements GEntity {
      * @param fsValue
      * @return result as success/failed
      */
-    public JSONObject setSrvcAdvr(String fsValue) {
-        return setValue("sSrvcAdvr", fsValue);
+    public JSONObject setEmployNm(String fsValue) {
+        return setValue("sEmployNm", fsValue);
     }
 
     /**
      * @return The Value of this record.
      */
-    public String getSrvcAdvr() {
-        return (String) getValue("sSrvcAdvr");
+    public String getEmployNm() {
+        return (String) getValue("sEmployNm");
     }
     
     /**
