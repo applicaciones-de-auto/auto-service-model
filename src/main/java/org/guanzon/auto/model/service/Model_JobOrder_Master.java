@@ -32,7 +32,7 @@ public class Model_JobOrder_Master implements GEntity {
     final String XML = "Model_JobOrder_Master.xml";
     private final String psDefaultDate = "1900-01-01";
     private String psBranchCd;
-    private String psExclude = "sOwnrNmxx»cClientTp»sAddressx»sCoOwnrNm»sCSNoxxxx»sFrameNox»sEngineNo»cVhclNewx»sPlateNox»sVhclDesc»sVSPNOxxx»sBranchCD»sBranchNm»sCoBuyrNm»sEmployNm"; //»
+    private String psExclude = "sTranStat»sOwnrNmxx»cClientTp»sAddressx»sCoOwnrNm»sCSNoxxxx»sFrameNox»sEngineNo»cVhclNewx»sPlateNox»sVhclDesc»sVSPNOxxx»sBranchCD»sBranchNm»sCoBuyrNm»sEmployNm"; //»
 
     GRider poGRider;                //application driver
     CachedRowSet poEntity;          //rowset
@@ -422,7 +422,7 @@ public class Model_JobOrder_Master implements GEntity {
         return MiscUtil.makeSelect(this);
     }
     
-    private String getSQL(){
+    public String getSQL(){
         return    " SELECT "                                                                         
                 + "   a.sTransNox "                                                                  
                 + " , a.dTransact "                                                                  
@@ -452,7 +452,12 @@ public class Model_JobOrder_Master implements GEntity {
                 + " , a.sEntryByx "                                                                  
                 + " , a.dEntryDte "                                                                  
                 + " , a.sModified "                                                                  
-                + " , a.dModified "                                                                  
+                + " , a.dModified "                                                     
+                + "  , CASE "          
+                + " 	WHEN a.cTranStat = '2' THEN 'APPROVE' "                     
+                + " 	WHEN a.cTranStat = '3' THEN 'CANCELLED' "                                       
+                + " 	ELSE 'OPEN'  "                                                          
+                + "    END AS sTranStat "                                                                  
                 + " , b.sCompnyNm AS sOwnrNmxx "                                                     
                 + " , b.cClientTp "                                                                  
                 + " , IFNULL(CONCAT( IFNULL(CONCAT(d.sHouseNox,' ') , ''), "                         

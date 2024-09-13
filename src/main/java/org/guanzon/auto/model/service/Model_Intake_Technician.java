@@ -6,7 +6,6 @@
 package org.guanzon.auto.model.service;
 
 import java.lang.reflect.Method;
-import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
@@ -24,11 +23,11 @@ import org.json.simple.JSONObject;
  *
  * @author Arsiela
  */
-public class Model_JobOrder_Labor implements GEntity{
-    final String XML = "Model_JobOrder_Labor.xml";
+public class Model_Intake_Technician implements GEntity{
+    final String XML = "Model_Intake_Technician.xml";
     private final String psDefaultDate = "1900-01-01";
     private String psTargetBranchCd = "";
-    private String psExclude = "sLaborDsc";
+    private String psExclude = "";
 
     GRider poGRider;                //application driver
     CachedRowSet poEntity;          //rowset
@@ -40,7 +39,7 @@ public class Model_JobOrder_Labor implements GEntity{
      *
      * @param foValue - GhostRider Application Driver
      */
-    public Model_JobOrder_Labor(GRider foValue) {
+    public Model_Intake_Technician(GRider foValue) {
         if (foValue == null) {
             System.err.println("Application Driver is not set.");
             System.exit(1);
@@ -59,9 +58,7 @@ public class Model_JobOrder_Labor implements GEntity{
             poEntity.moveToInsertRow();
 
             MiscUtil.initRowSet(poEntity);
-            poEntity.updateBigDecimal("nUnitPrce", new BigDecimal("0.00"));  
-            poEntity.updateBigDecimal("nFRTxxxxx", new BigDecimal("0.00"));  
-//            poEntity.updateInt("nEntryNox",0);   
+            poEntity.updateString("cReprActx","0");   
 
             poEntity.insertRow();
             poEntity.moveToCurrentRow();
@@ -134,7 +131,7 @@ public class Model_JobOrder_Labor implements GEntity{
      */
     @Override
     public String getTable() {
-        return "diagnostic_labor";
+        return "intake_technician";
     }
     
     /**
@@ -234,25 +231,21 @@ public class Model_JobOrder_Labor implements GEntity{
         return poJSON;
     }
 
-    @Override
-    public JSONObject openRecord(String string) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
     
     /**
      * Opens a record.
      *
      * @param fsValue - filter values
-     * @param fsValue2 - filter values
      * @return result as success/failed
      */
-    public JSONObject openRecord(String fsValue, String fsValue2) {
+    @Override
+    public JSONObject openRecord(String fsValue) {
         poJSON = new JSONObject();
 
         String lsSQL = getSQL(); //MiscUtil.makeSelect(this, psExclude); //exclude the columns called thru left join
 
         //replace the condition based on the primary key column of the record
-        lsSQL = MiscUtil.addCondition(lsSQL, " a.sTransNox = " + SQLUtil.toSQL(fsValue) + " AND a.sLaborCde = " + SQLUtil.toSQL(fsValue2) );
+        lsSQL = MiscUtil.addCondition(lsSQL, " a.sTransNox = " + SQLUtil.toSQL(fsValue));
 
         ResultSet loRS = poGRider.executeQuery(lsSQL);
 
@@ -277,7 +270,7 @@ public class Model_JobOrder_Labor implements GEntity{
 
         return poJSON;
     }
-
+    
     /**
      * Save the entity.
      *
@@ -308,17 +301,17 @@ public class Model_JobOrder_Labor implements GEntity{
                     poJSON.put("message", "No record to save.");
                 }
             } else {
-                Model_JobOrder_Labor loOldEntity = new Model_JobOrder_Labor(poGRider);
+                Model_Intake_Technician loOldEntity = new Model_Intake_Technician(poGRider);
 
                 //replace with the primary key column info
-                JSONObject loJSON = loOldEntity.openRecord(this.getTransNo(),this.getLaborCde());
+                JSONObject loJSON = loOldEntity.openRecord(this.getTransNo());
 
                 if ("success".equals((String) loJSON.get("result"))) {
                     setEntryBy(poGRider.getUserID());
                     setEntryDte(poGRider.getServerDate());
 
                     //replace the condition based on the primary key column of the record
-                    lsSQL = MiscUtil.makeSQL(this, loOldEntity, "sTransNox = " + SQLUtil.toSQL(this.getTransNo()) + " AND sLaborCde = " + SQLUtil.toSQL(this.getLaborCde()), psExclude);
+                    lsSQL = MiscUtil.makeSQL(this, loOldEntity, "sTransNox = " + SQLUtil.toSQL(this.getTransNo()) , psExclude);
 
                     if (!lsSQL.isEmpty()) {
                         if (poGRider.executeQuery(lsSQL, getTable(), poGRider.getBranchCode(), psTargetBranchCd) > 0) {
@@ -359,8 +352,7 @@ public class Model_JobOrder_Labor implements GEntity{
         poJSON = new JSONObject();
         
         String lsSQL = " DELETE FROM "+getTable()+" WHERE "
-                    + " sTransNox = " + SQLUtil.toSQL(this.getTransNo())
-                    + " AND sLaborCde = " + SQLUtil.toSQL(this.getLaborCde());
+                    + " sTransNox = " + SQLUtil.toSQL(this.getTransNo());
         if (!lsSQL.isEmpty()) {
             if (poGRider.executeQuery(lsSQL, getTable(), poGRider.getBranchCode(), "") > 0) {
                 poJSON.put("result", "success");
@@ -430,19 +422,18 @@ public class Model_JobOrder_Labor implements GEntity{
     }
     
     public String getSQL(){
-        return    " SELECT "                                        
-                + "   a.sTransNox "                                 
-                + " , a.nEntryNox "                                 
-                + " , a.sPayChrge "                                 
-                + " , a.sLaborCde "                                 
-                + " , a.sLbrPckCd "                                 
-                + " , a.nUnitPrce "                                 
-                + " , a.nFRTxxxxx "                                 
-                + " , a.sEntryByx "                                 
-                + " , a.dEntryDte "                                 
-                + " , b.sLaborDsc "                                 
-                + " FROM diagnostic_labor a "                       
-                + " LEFT JOIN labor b ON a.sLaborCde = b.sLaborCde " ;
+        return    "   SELECT "                   
+                + "    a.sTransNox "           
+                + "  , a.sTechIDxx "           
+                + "  , a.sDiagNoxx "           
+                + "  , a.sWorkCtgy "           
+                + "  , a.sLaborCde "           
+                + "  , a.cReprActx "           
+                + "  , a.cPermissn "           
+                + "  , a.cIsCancld "           
+                + "  , a.sEntryByx "           
+                + "  , a.dEntryDte "           
+                + " FROM intake_technician a " ;
     }
     
     /**
@@ -465,18 +456,18 @@ public class Model_JobOrder_Labor implements GEntity{
     /**
      * Description: Sets the Value of this record.
      *
-     * @param fnValue
-     * @return result as success/failed
+     * @param fsValue
+     * @return True if the record assignment is successful.
      */
-    public JSONObject setEntryNo(Integer fnValue) {
-        return setValue("nEntryNox", fnValue);
+    public JSONObject setTechID(String fsValue) {
+        return setValue("sTechIDxx", fsValue);
     }
 
     /**
-     * @return The Value of this record.
+     * @return The ID of this record.
      */
-    public Integer getEntryNo() {
-        return Integer.parseInt(String.valueOf(getValue("nEntryNox")));
+    public String getTechID() {
+        return (String) getValue("sTechIDxx");
     }
     
     /**
@@ -485,15 +476,32 @@ public class Model_JobOrder_Labor implements GEntity{
      * @param fsValue
      * @return True if the record assignment is successful.
      */
-    public JSONObject setPayChrge(String fsValue) {
-        return setValue("sPayChrge", fsValue);
+    public JSONObject setDiagNo(String fsValue) {
+        return setValue("sDiagNoxx", fsValue);
     }
 
     /**
-     * @return The Value of this record.
+     * @return The ID of this record.
      */
-    public String getPayChrge() {
-        return (String) getValue("sPayChrge");
+    public String getDiagNo() {
+        return (String) getValue("sDiagNoxx");
+    }
+    
+    /**
+     * Description: Sets the Value of this record.
+     *
+     * @param fsValue
+     * @return True if the record assignment is successful.
+     */
+    public JSONObject setWorkCtgy(String fsValue) {
+        return setValue("sWorkCtgy", fsValue);
+    }
+
+    /**
+     * @return The ID of this record.
+     */
+    public String getWorkCtgy() {
+        return (String) getValue("sWorkCtgy");
     }
     
     /**
@@ -507,7 +515,7 @@ public class Model_JobOrder_Labor implements GEntity{
     }
 
     /**
-     * @return The Value of this record.
+     * @return The ID of this record.
      */
     public String getLaborCde() {
         return (String) getValue("sLaborCde");
@@ -519,49 +527,49 @@ public class Model_JobOrder_Labor implements GEntity{
      * @param fsValue
      * @return True if the record assignment is successful.
      */
-    public JSONObject setLbrPckCd(String fsValue) {
-        return setValue("sLbrPckCd", fsValue);
+    public JSONObject setReprAct(String fsValue) {
+        return setValue("cReprActx", fsValue);
     }
 
     /**
-     * @return The Value of this record.
+     * @return The ID of this record.
      */
-    public String getLbrPckCd() {
-        return (String) getValue("sLbrPckCd");
+    public String getReprAct() {
+        return (String) getValue("cReprActx");
     }
     
     /**
      * Description: Sets the Value of this record.
      *
-     * @param fdbValue
-     * @return result as success/failed
+     * @param fsValue
+     * @return True if the record assignment is successful.
      */
-    public JSONObject setUnitPrce(BigDecimal fdbValue) {
-        return setValue("nUnitPrce", fdbValue);
+    public JSONObject setPermissn(String fsValue) {
+        return setValue("cPermissn", fsValue);
     }
 
     /**
-     * @return The Value of this record.
+     * @return The ID of this record.
      */
-    public BigDecimal getUnitPrce() {
-        return new BigDecimal(String.valueOf(getValue("nUnitPrce")));
+    public String getPermissn() {
+        return (String) getValue("cPermissn");
     }
     
     /**
      * Description: Sets the Value of this record.
      *
-     * @param fdbValue
-     * @return result as success/failed
+     * @param fsValue
+     * @return True if the record assignment is successful.
      */
-    public JSONObject setFRTAmt(BigDecimal fdbValue) {
-        return setValue("nFRTxxxxx", fdbValue);
+    public JSONObject setIsCancld(String fsValue) {
+        return setValue("cIsCancld", fsValue);
     }
 
     /**
-     * @return The Value of this record.
+     * @return The ID of this record.
      */
-    public BigDecimal getFRTAmt() {
-        return new BigDecimal(String.valueOf(getValue("nFRTxxxxx")));
+    public String getIsCancld() {
+        return (String) getValue("cIsCancld");
     }
     
     /**
@@ -602,22 +610,4 @@ public class Model_JobOrder_Labor implements GEntity{
         
         return date;
     }
-    
-    /**
-     * Description: Sets the Value of this record.
-     *
-     * @param fsValue
-     * @return True if the record assignment is successful.
-     */
-    public JSONObject setLaborDsc(String fsValue) {
-        return setValue("sLaborDsc", fsValue);
-    }
-
-    /**
-     * @return The Value of this record.
-     */
-    public String getLaborDsc() {
-        return (String) getValue("sLaborDsc");
-    }
-    
 }
