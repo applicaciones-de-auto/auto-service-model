@@ -426,10 +426,10 @@ public class Model_JobOrder_Labor implements GEntity{
      * @return SQL Select Statement
      */
     public String makeSelectSQL() {
-        return MiscUtil.makeSelect(this);
+        return MiscUtil.makeSelect(this, psExclude);
     }
     
-    public String getSQL(){
+    private String getSQL(){
         return    " SELECT "                                        
                 + "   a.sTransNox "                                 
                 + " , a.nEntryNox "                                 
