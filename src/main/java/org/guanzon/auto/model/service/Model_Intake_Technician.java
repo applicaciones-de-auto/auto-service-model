@@ -6,7 +6,6 @@
 package org.guanzon.auto.model.service;
 
 import java.lang.reflect.Method;
-import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
@@ -24,11 +23,11 @@ import org.json.simple.JSONObject;
  *
  * @author Arsiela
  */
-public class Model_JobOrder_Parts implements GEntity{
-    final String XML = "Model_JobOrder_Parts.xml";
+public class Model_Intake_Technician implements GEntity{
+    final String XML = "Model_Intake_Technician.xml";
     private final String psDefaultDate = "1900-01-01";
     private String psTargetBranchCd = "";
-    private String psExclude = "sBarCodex";
+    private String psExclude = "";
 
     GRider poGRider;                //application driver
     CachedRowSet poEntity;          //rowset
@@ -40,7 +39,7 @@ public class Model_JobOrder_Parts implements GEntity{
      *
      * @param foValue - GhostRider Application Driver
      */
-    public Model_JobOrder_Parts(GRider foValue) {
+    public Model_Intake_Technician(GRider foValue) {
         if (foValue == null) {
             System.err.println("Application Driver is not set.");
             System.exit(1);
@@ -59,12 +58,7 @@ public class Model_JobOrder_Parts implements GEntity{
             poEntity.moveToInsertRow();
 
             MiscUtil.initRowSet(poEntity);
-            poEntity.updateBigDecimal("nUnitPrce", new BigDecimal("0.00")); 
-//            poEntity.updateInt("nEntryNox", 0);  
-            poEntity.updateInt("nQtyEstmt", 0); 
-            poEntity.updateInt("nQtyUsedx", 0); 
-            poEntity.updateInt("nQtyRecvd", 0); 
-            poEntity.updateInt("nQtyRtrnx", 0); 
+            poEntity.updateString("cReprActx","0");   
 
             poEntity.insertRow();
             poEntity.moveToCurrentRow();
@@ -129,7 +123,7 @@ public class Model_JobOrder_Parts implements GEntity{
     public int getEditMode() {
         return pnEditMode;
     }
-
+    
     /**
      * Gets the table name.
      *
@@ -137,7 +131,7 @@ public class Model_JobOrder_Parts implements GEntity{
      */
     @Override
     public String getTable() {
-        return "diagnostic_parts";
+        return "intake_technician";
     }
     
     /**
@@ -231,31 +225,27 @@ public class Model_JobOrder_Parts implements GEntity{
     @Override
     public JSONObject newRecord() {
         pnEditMode = EditMode.ADDNEW;
-
+        
         poJSON = new JSONObject();
         poJSON.put("result", "success");
         return poJSON;
     }
-    
-    @Override
-    public JSONObject openRecord(String string) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
+
     
     /**
      * Opens a record.
      *
      * @param fsValue - filter values
-     * @param fsValue2 - filter values
      * @return result as success/failed
      */
-    public JSONObject openRecord(String fsValue, String fsValue2) {
+    @Override
+    public JSONObject openRecord(String fsValue) {
         poJSON = new JSONObject();
 
         String lsSQL = getSQL(); //MiscUtil.makeSelect(this, psExclude); //exclude the columns called thru left join
 
         //replace the condition based on the primary key column of the record
-        lsSQL = MiscUtil.addCondition(lsSQL, " a.sTransNox = " + SQLUtil.toSQL(fsValue) + " AND (a.sStockIDx = " + SQLUtil.toSQL(fsValue2) + " OR REPLACE(a.sDescript,' ', '') = " + SQLUtil.toSQL(fsValue2.replace(" ", ""))+ " )" );
+        lsSQL = MiscUtil.addCondition(lsSQL, " a.sTransNox = " + SQLUtil.toSQL(fsValue));
 
         ResultSet loRS = poGRider.executeQuery(lsSQL);
 
@@ -280,7 +270,7 @@ public class Model_JobOrder_Parts implements GEntity{
 
         return poJSON;
     }
-
+    
     /**
      * Save the entity.
      *
@@ -311,21 +301,17 @@ public class Model_JobOrder_Parts implements GEntity{
                     poJSON.put("message", "No record to save.");
                 }
             } else {
-                Model_JobOrder_Parts loOldEntity = new Model_JobOrder_Parts(poGRider);
+                Model_Intake_Technician loOldEntity = new Model_Intake_Technician(poGRider);
 
                 //replace with the primary key column info
-                String lsValue2 = this.getStockID();
-                if(lsValue2.isEmpty()){
-                    lsValue2 = this.getDescript();
-                }
-                JSONObject loJSON = loOldEntity.openRecord(this.getTransNo(),this.getStockID());
+                JSONObject loJSON = loOldEntity.openRecord(this.getTransNo());
 
                 if ("success".equals((String) loJSON.get("result"))) {
                     setEntryBy(poGRider.getUserID());
                     setEntryDte(poGRider.getServerDate());
 
                     //replace the condition based on the primary key column of the record
-                    lsSQL = MiscUtil.makeSQL(this, loOldEntity, "sTransNox = " + SQLUtil.toSQL(this.getTransNo()) + " AND (sStockIDx = " + SQLUtil.toSQL(this.getStockID()) + " OR sDescript = " + SQLUtil.toSQL(this.getDescript()) + " )" , psExclude);
+                    lsSQL = MiscUtil.makeSQL(this, loOldEntity, "sTransNox = " + SQLUtil.toSQL(this.getTransNo()) , psExclude);
 
                     if (!lsSQL.isEmpty()) {
                         if (poGRider.executeQuery(lsSQL, getTable(), poGRider.getBranchCode(), psTargetBranchCd) > 0) {
@@ -366,10 +352,7 @@ public class Model_JobOrder_Parts implements GEntity{
         poJSON = new JSONObject();
         
         String lsSQL = " DELETE FROM "+getTable()+" WHERE "
-                    + " sTransNox = " + SQLUtil.toSQL(this.getTransNo())
-                    + " AND (sStockIDx = " + SQLUtil.toSQL(this.getStockID())
-                    + " OR REPLACE(sDescript,' ', '') = " + SQLUtil.toSQL(this.getDescript().replace(" ", "")) + ") ";
-        
+                    + " sTransNox = " + SQLUtil.toSQL(this.getTransNo());
         if (!lsSQL.isEmpty()) {
             if (poGRider.executeQuery(lsSQL, getTable(), poGRider.getBranchCode(), "") > 0) {
                 poJSON.put("result", "success");
@@ -435,29 +418,23 @@ public class Model_JobOrder_Parts implements GEntity{
      * @return SQL Select Statement
      */
     public String makeSelectSQL() {
-        return MiscUtil.makeSelect(this, psExclude);
+        return MiscUtil.makeSelect(this);
     }
     
-    private String getSQL(){
-        return    "SELECT "                                              
-                + "   a.sTransNox "                                      
-                + " , a.nEntryNox "                                      
-                + " , a.sStockIDx "                                      
-                + " , a.sDescript "                                      
-                + " , a.sLbrPckCd "                                      
-                + " , a.nQtyEstmt "                                      
-                + " , a.nQtyUsedx "                                      
-                + " , a.nQtyRecvd "                                      
-                + " , a.nQtyRtrnx "                                      
-                + " , a.nUnitPrce "                                      
-                + " , a.sPayChrge "                                      
-                + " , a.sEntryByx "                                      
-                + " , a.dEntryDte "                                     
-                + " , b.sBarCodex "                                      
-                + "FROM diagnostic_parts a "                             
-                + "LEFT JOIN inventory b ON b.sStockIDx = a.sStockIDx "   ;
+    public String getSQL(){
+        return    "   SELECT "                   
+                + "    a.sTransNox "           
+                + "  , a.sTechIDxx "           
+                + "  , a.sDiagNoxx "           
+                + "  , a.sWorkCtgy "           
+                + "  , a.sLaborCde "           
+                + "  , a.cReprActx "           
+                + "  , a.cPermissn "           
+                + "  , a.cIsCancld "           
+                + "  , a.sEntryByx "           
+                + "  , a.dEntryDte "           
+                + " FROM intake_technician a " ;
     }
-    
     
     /**
      * Description: Sets the ID of this record.
@@ -479,18 +456,18 @@ public class Model_JobOrder_Parts implements GEntity{
     /**
      * Description: Sets the Value of this record.
      *
-     * @param fnValue
-     * @return result as success/failed
+     * @param fsValue
+     * @return True if the record assignment is successful.
      */
-    public JSONObject setEntryNo(Integer fnValue) {
-        return setValue("nEntryNox", fnValue);
+    public JSONObject setTechID(String fsValue) {
+        return setValue("sTechIDxx", fsValue);
     }
 
     /**
-     * @return The Value of this record.
+     * @return The ID of this record.
      */
-    public Integer getEntryNo() {
-        return Integer.parseInt(String.valueOf(getValue("nEntryNox")));
+    public String getTechID() {
+        return (String) getValue("sTechIDxx");
     }
     
     /**
@@ -499,15 +476,15 @@ public class Model_JobOrder_Parts implements GEntity{
      * @param fsValue
      * @return True if the record assignment is successful.
      */
-    public JSONObject setStockID(String fsValue) {
-        return setValue("sStockIDx", fsValue);
+    public JSONObject setDiagNo(String fsValue) {
+        return setValue("sDiagNoxx", fsValue);
     }
 
     /**
-     * @return The Value of this record.
+     * @return The ID of this record.
      */
-    public String getStockID() {
-        return (String) getValue("sStockIDx");
+    public String getDiagNo() {
+        return (String) getValue("sDiagNoxx");
     }
     
     /**
@@ -516,15 +493,15 @@ public class Model_JobOrder_Parts implements GEntity{
      * @param fsValue
      * @return True if the record assignment is successful.
      */
-    public JSONObject setDescript(String fsValue) {
-        return setValue("sDescript", fsValue);
+    public JSONObject setWorkCtgy(String fsValue) {
+        return setValue("sWorkCtgy", fsValue);
     }
 
     /**
-     * @return The Value of this record.
+     * @return The ID of this record.
      */
-    public String getDescript() {
-        return (String) getValue("sDescript");
+    public String getWorkCtgy() {
+        return (String) getValue("sWorkCtgy");
     }
     
     /**
@@ -533,118 +510,66 @@ public class Model_JobOrder_Parts implements GEntity{
      * @param fsValue
      * @return True if the record assignment is successful.
      */
-    public JSONObject setLbrPckCd(String fsValue) {
-        return setValue("sLbrPckCd", fsValue);
+    public JSONObject setLaborCde(String fsValue) {
+        return setValue("sLaborCde", fsValue);
     }
 
     /**
-     * @return The Value of this record.
+     * @return The ID of this record.
      */
-    public String getLbrPckCd() {
-        return (String) getValue("sLbrPckCd");
-    }
-    
-    /**
-     * Description: Sets the Value of this record.
-     *
-     * @param fnValue
-     * @return result as success/failed
-     */
-    public JSONObject setQtyEstmt(Integer fnValue) {
-        return setValue("nQtyEstmt", fnValue);
-    }
-
-    /**
-     * @return The Value of this record.
-     */
-    public Integer getQtyEstmt() {
-        return Integer.parseInt(String.valueOf(getValue("nQtyEstmt")));
-    }
-    
-    /**
-     * Description: Sets the Value of this record.
-     *
-     * @param fnValue
-     * @return result as success/failed
-     */
-    public JSONObject setQtyUsed(Integer fnValue) {
-        return setValue("nQtyUsedx", fnValue);
-    }
-
-    /**
-     * @return The Value of this record.
-     */
-    public Integer getQtyUsed() {
-        return Integer.parseInt(String.valueOf(getValue("nQtyUsedx")));
-    }
-    
-    /**
-     * Description: Sets the Value of this record.
-     *
-     * @param fnValue
-     * @return result as success/failed
-     */
-    public JSONObject setQtyRecvd(Integer fnValue) {
-        return setValue("nQtyRecvd", fnValue);
-    }
-
-    /**
-     * @return The Value of this record.
-     */
-    public Integer getQtyRecvd() {
-        return Integer.parseInt(String.valueOf(getValue("nQtyRecvd")));
-    }
-    
-    /**
-     * Description: Sets the Value of this record.
-     *
-     * @param fnValue
-     * @return result as success/failed
-     */
-    public JSONObject setQtyRtrn(Integer fnValue) {
-        return setValue("nQtyRtrnx", fnValue);
-    }
-
-    /**
-     * @return The Value of this record.
-     */
-    public Integer getQtyRtrn() {
-        return Integer.parseInt(String.valueOf(getValue("nQtyRtrnx")));
-    }
-    
-    /**
-     * Description: Sets the Value of this record.
-     *
-     * @param fdbValue
-     * @return result as success/failed
-     */
-    public JSONObject setUnitPrce(BigDecimal fdbValue) {
-        return setValue("nUnitPrce", fdbValue);
-    }
-
-    /**
-     * @return The Value of this record.
-     */
-    public BigDecimal getUnitPrce() {
-        return new BigDecimal(String.valueOf(getValue("nUnitPrce")));
-//        return Double.parseDouble(String.valueOf(getValue("nUnitPrce")));
+    public String getLaborCde() {
+        return (String) getValue("sLaborCde");
     }
     
     /**
      * Description: Sets the Value of this record.
      *
      * @param fsValue
-     * @return result as success/failed
+     * @return True if the record assignment is successful.
      */
-    public JSONObject setPayChrge(String fsValue) {
-        return setValue("sPayChrge", fsValue);
+    public JSONObject setReprAct(String fsValue) {
+        return setValue("cReprActx", fsValue);
     }
 
     /**
-     * @return The Value of this record.
+     * @return The ID of this record.
      */
-    public String getPayChrge() {
-        return (String) getValue("sPayChrge");
+    public String getReprAct() {
+        return (String) getValue("cReprActx");
+    }
+    
+    /**
+     * Description: Sets the Value of this record.
+     *
+     * @param fsValue
+     * @return True if the record assignment is successful.
+     */
+    public JSONObject setPermissn(String fsValue) {
+        return setValue("cPermissn", fsValue);
+    }
+
+    /**
+     * @return The ID of this record.
+     */
+    public String getPermissn() {
+        return (String) getValue("cPermissn");
+    }
+    
+    /**
+     * Description: Sets the Value of this record.
+     *
+     * @param fsValue
+     * @return True if the record assignment is successful.
+     */
+    public JSONObject setIsCancld(String fsValue) {
+        return setValue("cIsCancld", fsValue);
+    }
+
+    /**
+     * @return The ID of this record.
+     */
+    public String getIsCancld() {
+        return (String) getValue("cIsCancld");
     }
     
     /**
@@ -685,23 +610,4 @@ public class Model_JobOrder_Parts implements GEntity{
         
         return date;
     }
-    
-    /**
-     * Description: Sets the Value of this record.
-     *
-     * @param fsValue
-     * @return True if the record assignment is successful.
-     */
-    public JSONObject setBarCode(String fsValue) {
-        return setValue("sBarCodex", fsValue);
-    }
-
-    /**
-     * @return The Value of this record.
-     */
-    public String getBarCode() {
-        return (String) getValue("sBarCodex");
-    }
-    
-    
 }
