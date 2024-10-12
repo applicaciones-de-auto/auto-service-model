@@ -27,7 +27,7 @@ public class Model_Intake_Technician implements GEntity{
     final String XML = "Model_Intake_Technician.xml";
     private final String psDefaultDate = "1900-01-01";
     private String psTargetBranchCd = "";
-    private String psExclude = "";
+    private String psExclude = "sTechName»cTchSkill»cBrpSkill»sLaborDsc";
 
     GRider poGRider;                //application driver
     CachedRowSet poEntity;          //rowset
@@ -226,6 +226,8 @@ public class Model_Intake_Technician implements GEntity{
     public JSONObject newRecord() {
         pnEditMode = EditMode.ADDNEW;
         
+        setTransNo(MiscUtil.getNextCode(getTable(), "sTransNox", true, poGRider.getConnection(), poGRider.getBranchCode()));
+            
         poJSON = new JSONObject();
         poJSON.put("result", "success");
         return poJSON;
@@ -283,6 +285,7 @@ public class Model_Intake_Technician implements GEntity{
         if (pnEditMode == EditMode.ADDNEW || pnEditMode == EditMode.UPDATE) {
             String lsSQL;
             if (pnEditMode == EditMode.ADDNEW) {
+                setTransNo(MiscUtil.getNextCode(getTable(), "sTransNox", true, poGRider.getConnection(), poGRider.getBranchCode()));
                 setEntryBy(poGRider.getUserID());
                 setEntryDte(poGRider.getServerDate());
                 
@@ -418,7 +421,7 @@ public class Model_Intake_Technician implements GEntity{
      * @return SQL Select Statement
      */
     public String makeSelectSQL() {
-        return MiscUtil.makeSelect(this);
+        return MiscUtil.makeSelect(this, psExclude);
     }
     
     public String getSQL(){
@@ -432,8 +435,15 @@ public class Model_Intake_Technician implements GEntity{
                 + "  , a.cPermissn "           
                 + "  , a.cIsCancld "           
                 + "  , a.sEntryByx "           
-                + "  , a.dEntryDte "           
-                + " FROM intake_technician a " ;
+                + "  , a.dEntryDte "
+                + "  , b.cTchSkill " 
+                + "  , b.cBrpSkill "
+                + "  , c.sCompnyNm AS sTechName "  
+                + "  , d.sLaborDsc "          
+                + " FROM intake_technician a "
+                + "LEFT JOIN service_mechanic b ON b.sClientID = a.sTechIDxx " 
+                + "LEFT JOIN ggc_isysdbf.client_master c ON c.sClientID = b.sClientID " 
+                + "LEFT JOIN labor d ON d.sLaborCde = a.sLaborCde " ;
     }
     
     /**
@@ -527,6 +537,23 @@ public class Model_Intake_Technician implements GEntity{
      * @param fsValue
      * @return True if the record assignment is successful.
      */
+    public JSONObject setLaborDsc(String fsValue) {
+        return setValue("sLaborDsc", fsValue);
+    }
+
+    /**
+     * @return The ID of this record.
+     */
+    public String getLaborDsc() {
+        return (String) getValue("sLaborDsc");
+    }
+    
+    /**
+     * Description: Sets the Value of this record.
+     *
+     * @param fsValue
+     * @return True if the record assignment is successful.
+     */
     public JSONObject setReprAct(String fsValue) {
         return setValue("cReprActx", fsValue);
     }
@@ -609,5 +636,56 @@ public class Model_Intake_Technician implements GEntity{
         }
         
         return date;
+    }
+    
+    /**
+     * Description: Sets the Value of this record.
+     *
+     * @param fsValue
+     * @return True if the record assignment is successful.
+     */
+    public JSONObject setTechName(String fsValue) {
+        return setValue("sTechName", fsValue);
+    }
+
+    /**
+     * @return The Value of this record.
+     */
+    public String getTechName() {
+        return (String) getValue("sTechName");
+    }
+    
+    /**
+     * Description: Sets the Value of this record.
+     *
+     * @param fsValue
+     * @return True if the record assignment is successful.
+     */
+    public JSONObject setTchSkill(String fsValue) {
+        return setValue("cTchSkill", fsValue);
+    }
+
+    /**
+     * @return The Value of this record.
+     */
+    public String getTchSkill() {
+        return (String) getValue("cTchSkill");
+    }
+    
+    /**
+     * Description: Sets the Value of this record.
+     *
+     * @param fsValue
+     * @return True if the record assignment is successful.
+     */
+    public JSONObject setBrpSkill(String fsValue) {
+        return setValue("cBrpSkill", fsValue);
+    }
+
+    /**
+     * @return The Value of this record.
+     */
+    public String getBrpSkill() {
+        return (String) getValue("cBrpSkill");
     }
 }
