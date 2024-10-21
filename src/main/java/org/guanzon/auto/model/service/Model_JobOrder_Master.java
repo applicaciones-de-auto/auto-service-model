@@ -238,7 +238,7 @@ public class Model_JobOrder_Master implements GEntity {
         setTransNo(MiscUtil.getNextCode(getTable(), "sTransNox", true, poGRider.getConnection(), poGRider.getBranchCode()+"JO"));
         setDSNo(MiscUtil.getNextCode(getTable(), "sDSNoxxxx", true, poGRider.getConnection(), poGRider.getBranchCode()));
         setTransactDte(poGRider.getServerDate());
-        
+        setPrinted("0");
         poJSON = new JSONObject();
         poJSON.put("result", "success");
         return poJSON;
