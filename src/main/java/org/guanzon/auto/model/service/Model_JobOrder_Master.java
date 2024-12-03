@@ -32,7 +32,7 @@ public class Model_JobOrder_Master implements GEntity {
     final String XML = "Model_JobOrder_Master.xml";
     private final String psDefaultDate = "1900-01-01";
     private String psBranchCd;
-    private String psExclude = "sTranStat»sOwnrNmxx»cClientTp»sAddressx»sCoOwnrNm»sCSNoxxxx»sFrameNox»sEngineNo»cVhclNewx»sPlateNox»sVhclDesc»sVSPNOxxx»sBranchCD»sBranchNm»sCoBuyrNm»sEmployNm"; //»
+    private String psExclude = "sTranStat»sOwnrNmxx»cClientTp»sAddressx»sCoOwnrNm»sCSNoxxxx»sFrameNox»sEngineNo»cVhclNewx»sPlateNox»sVhclDesc»sVSPNOxxx»sBranchCD»sBranchNm»sCoBuyrNm»sEmployNm»sComplete»dComplete"; //»
 
     GRider poGRider;                //application driver
     CachedRowSet poEntity;          //rowset
@@ -64,7 +64,8 @@ public class Model_JobOrder_Master implements GEntity {
 
             MiscUtil.initRowSet(poEntity);        
             poEntity.updateObject("dTransact", poGRider.getServerDate()); 
-            poEntity.updateObject("dPromised", poGRider.getServerDate());   
+            poEntity.updateObject("dPromised", poGRider.getServerDate());  
+            poEntity.updateObject("dComplete", SQLUtil.toDate(psDefaultDate, SQLUtil.FORMAT_SHORT_DATE)); 
             poEntity.updateString("cTranStat", TransactionStatus.STATE_OPEN); //TransactionStatus.STATE_OPEN why is the value of STATE_OPEN is 0 while record status active is 1
             poEntity.updateString("cPrintedx", "0"); 
             //RecordStatus.ACTIVE
@@ -419,7 +420,7 @@ public class Model_JobOrder_Master implements GEntity {
      * @return SQL Select Statement
      */
     public String makeSelectSQL() {
-        return MiscUtil.makeSelect(this);
+        return MiscUtil.makeSelect(this, psExclude);
     }
     
     public String getSQL(){
@@ -454,7 +455,7 @@ public class Model_JobOrder_Master implements GEntity {
                 + " , a.sModified "                                                                  
                 + " , a.dModified "                                                     
                 + "  , CASE "          
-                + " 	WHEN a.cTranStat = "+SQLUtil.toSQL(TransactionStatus.STATE_CLOSED)+" THEN 'APPROVE' "                     
+                + " 	WHEN a.cTranStat = "+SQLUtil.toSQL(TransactionStatus.STATE_CLOSED)+" THEN 'COMPLETED' "                     
                 + " 	WHEN a.cTranStat = "+SQLUtil.toSQL(TransactionStatus.STATE_CANCELLED)+" THEN 'CANCELLED' "                  
                 + " 	WHEN a.cTranStat = "+SQLUtil.toSQL(TransactionStatus.STATE_OPEN)+" THEN 'ACTIVE' "                    
                 + " 	WHEN a.cTranStat = "+SQLUtil.toSQL(TransactionStatus.STATE_POSTED)+" THEN 'POSTED' "                                      
@@ -478,7 +479,9 @@ public class Model_JobOrder_Master implements GEntity {
                 + " , l.sBranchCD "                                                                  
                 + " , n.sBranchNm "                                                                  
                 + " , m.sCompnyNm AS sCoBuyrNm "                                                     
-                + " , o.sCompnyNm AS sEmployNm "                                                     
+                + " , o.sCompnyNm AS sEmployNm "                                                                     
+                + " , DATE(p.dModified) AS dComplete "                                                                           
+                + " , q.sCompnyNm AS sComplete "                                                    
                 + " FROM diagnostic_master a "                                                       
                 + " LEFT JOIN client_master b ON b.sClientID = a.sClientID "                         
                 + " LEFT JOIN client_address c ON c.sClientID = a.sClientID AND c.cPrimaryx = '1' "  
@@ -493,7 +496,9 @@ public class Model_JobOrder_Master implements GEntity {
                 + " LEFT JOIN vsp_master l ON l.sTransNox = a.sSourceNo "                            
                 + " LEFT JOIN client_master m ON m.sClientID = l.sCoCltIDx " /*co-buyer*/            
                 + " LEFT JOIN branch n ON n.sBranchCd = l.sBranchCD "                                
-                + " LEFT JOIN ggc_isysdbf.client_master o ON o.sClientID = a.sEmployID "    ;                          
+                + " LEFT JOIN ggc_isysdbf.client_master o ON o.sClientID = a.sEmployID "   
+                + " LEFT JOIN transaction_status_history p ON p.sSourceNo = a.sTransNox AND p.cRefrStat = "+ SQLUtil.toSQL(TransactionStatus.STATE_CLOSED) + " AND p.cTranStat <> "+ SQLUtil.toSQL(TransactionStatus.STATE_CANCELLED)
+                + " LEFT JOIN ggc_isysdbf.client_master q ON q.sClientID = p.sModified " ;                      
     }
     
     private static String xsDateShort(Date fdValue) {
@@ -1310,5 +1315,46 @@ public class Model_JobOrder_Master implements GEntity {
      */
     public String getBranchNm() {
         return (String) getValue("sBranchNm");
+    }
+    
+    /**
+     * Description: Sets the Value of this record.
+     *
+     * @param fdValue
+     * @return result as success/failed
+     */
+    public JSONObject setComplete(Date fdValue) {
+        return setValue("dComplete", fdValue);
+    }
+
+    /**
+     * @return The Value of this record.
+     */
+    public Date getCompleteDte() {
+        Date date = null;
+        if(getValue("dComplete") == null || getValue("dComplete").equals("")){
+            date = SQLUtil.toDate(psDefaultDate, SQLUtil.FORMAT_SHORT_DATE);
+        } else {
+            date = SQLUtil.toDate(xsDateShort((Date) getValue("dComplete")), SQLUtil.FORMAT_SHORT_DATE);
+        }
+            
+        return date;
+    }
+    
+    /**
+     * Description: Sets the Value of this record.
+     *
+     * @param fsValue
+     * @return result as success/failed
+     */
+    public JSONObject setCompleteBy(String fsValue) {
+        return setValue("sComplete", fsValue);
+    }
+
+    /**
+     * @return The Value of this record.
+     */
+    public String getCompleteBy() {
+        return (String) getValue("sComplete");
     }
 }
